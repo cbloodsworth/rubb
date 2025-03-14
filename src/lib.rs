@@ -1,4 +1,4 @@
-//! Library file for russell.
+//! Library file for Rubb.
 //!
 //! `lib.rs` files in `src/` let you define what parts of your library get
 //! exported where.
