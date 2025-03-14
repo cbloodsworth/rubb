@@ -12,6 +12,8 @@
 // This API can be accessed from anywhere -- it should be simple to call and 
 // not expose any details about the implementation.
 pub fn run(program: String) {
+    let tokens = lexer::lex(&program);
+
     todo!()
 }
 

@@ -1,9 +1,10 @@
-pub fn lex() {
+/// Takes program text as input and tokenizes it.
+pub fn lex(input: &str) -> Vec<Token> {
     todo!()
 }
 
 /// Struct representing the tokens in our language.
-struct Token {
+pub struct Token {
     kind: TokenKind,
     lexeme: String,
 }
