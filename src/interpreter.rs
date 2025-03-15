@@ -1,5 +1,5 @@
 pub fn interpret() {
-    todo!()
+    todo!("Interpreter has not yet been written.")
 }
 
 #[cfg(test)]

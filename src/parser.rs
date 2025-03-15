@@ -1,5 +1,5 @@
 pub fn parse() {
-    todo!()
+    todo!("Parser has not yet been written.")
 }
 
 #[cfg(test)]

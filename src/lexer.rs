@@ -1,6 +1,6 @@
 /// Takes program text as input and tokenizes it.
 pub fn lex(input: &str) -> Vec<Token> {
-    todo!()
+    todo!("Lexer has not yet been written.")
 }
 
 /// Struct representing the tokens in our language.
@@ -10,6 +10,7 @@ pub struct Token {
 }
 
 /// Enum representing the kinds of tokens in our language.
+#[derive(Debug, PartialEq)]
 enum TokenKind {
     // Single-character tokens
     LeftParen, RightParen,       // (  )
@@ -32,6 +33,7 @@ enum TokenKind {
     True, False,                 // true  false
     Func, Return,                // fn    return
     Let, Const,                  // let   const
+    Struct, 
 }
 
 /// Allows us to print TokenKinds or convert them to a string.
@@ -72,6 +74,7 @@ impl std::fmt::Display for TokenKind {
             TokenKind::Return => "return",
             TokenKind::Let => "let",
             TokenKind::Const => "const",
+            TokenKind::Struct => "struct",
         };
 
         write!(f, "{s}")
