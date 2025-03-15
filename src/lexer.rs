@@ -1,5 +1,8 @@
 /// Takes program text as input and tokenizes it.
-pub fn lex(input: &str) -> Vec<Token> {
+/// 
+/// # Errors
+/// If the input cannot be lexed, returns a LexerError.
+pub fn lex(input: &str) -> Result<Vec<Token>, LexerError> {
     todo!("Lexer has not yet been written.")
 }
 
@@ -78,6 +81,19 @@ impl std::fmt::Display for TokenKind {
         };
 
         write!(f, "{s}")
+    }
+}
+
+#[derive(Debug)]
+pub struct LexerError {
+    message: String,
+    line_number: usize,
+    column_number: usize,
+}
+
+impl std::fmt::Display for LexerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}:{}", self.message, self.line_number, self.column_number)
     }
 }
 
