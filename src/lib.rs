@@ -7,6 +7,10 @@
 //! utility functions that are likely to be used throughout the crate -- we
 //! definitely don't want to clutter it too much, though. This file acts
 //! as kind of a guide for what parts of the API is public vs. library-only.
+#![warn(
+    clippy::pedantic,
+    clippy::nursery,
+)]
 
 // Public API
 // This API can be accessed from anywhere -- it should be simple to call and 
