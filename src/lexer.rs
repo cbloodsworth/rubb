@@ -1,11 +1,97 @@
 use anyhow::{Result, Context};
 
-/// Takes program text as input and tokenizes it.
-/// 
-/// # Errors
-/// If the input cannot be lexed, returns a LexerError.
-pub fn lex(input: &str) -> Result<Vec<Token>> {
-    todo!("Lexer has not yet been written.")
+// Takes program text as input and tokenizes it.
+// pub fn lex(input: &str) -> Vec<Token> {
+//     todo!("Lexer has not yet been written.")
+// }
+
+pub struct Lexer;
+
+impl Lexer {
+    // Takes program text as input and tokenizes it.
+    pub fn lex(input: &str) -> Vec<Token> {
+        let mut tokens: Vec<Token> = vec![];
+        let mut input = input.chars().peekable();
+        while let Some(ch) = input.next() {
+            match ch {
+                '(' | ')' | '[' | ']' | '{' | '}' | '+' | '-' | '*' | '/' | ',' | '.' | ';'  => {
+                    match Self::generate_single_token(ch) {
+                        Ok(token) => tokens.push(token),
+                        Err(err_message) => println!("{err_message}")
+                    }
+                }
+                // NOTE: yea this sux
+                '!' => {  
+                    if let Some(&next) = input.peek() {
+                        if next == '=' {
+                            tokens.push(Token{kind: TokenKind::BangEqual, lexeme: "!=".to_string()});
+                        }
+                    } else {
+                        tokens.push(Token{kind: TokenKind::Bang, lexeme: "!".to_string()});
+                    }
+                }
+                '=' => {
+                    if let Some(&next) = input.peek() {
+                        if next == '=' {
+                            tokens.push(Token{kind: TokenKind::EqualEqual, lexeme: "==".to_string()});
+                        }
+                    } else {
+                        tokens.push(Token{kind: TokenKind::Equal, lexeme: "=".to_string()});
+                    }
+                }
+                '>' => {
+                    if let Some(&next) = input.peek() {
+                        if next == '=' {
+                            tokens.push(Token{kind: TokenKind::GreaterEqual, lexeme: ">=".to_string()});
+                        }
+                    } else {
+                        tokens.push(Token{kind: TokenKind::Greater, lexeme: ">".to_string()});
+                    }
+                }
+                '<' => {
+                    if let Some(&next) = input.peek() {
+                        if next == '=' {
+                            tokens.push(Token{kind: TokenKind::LessEqual, lexeme: "<=".to_string()});
+                        }
+                    } else {
+                        tokens.push(Token{kind: TokenKind::Less, lexeme: "<".to_string()});
+                    }
+                }
+                _ => {
+                    println!("hi :)");
+                }
+            }
+        }                               
+        return tokens;
+    }
+    
+    fn generate_single_token(input: char) -> Result<Token, String> {
+        return match input {
+            '(' => Ok(Token{kind: TokenKind::LeftParen, lexeme: input.to_string()}),
+            ')' => Ok(Token{kind: TokenKind::RightParen, lexeme: input.to_string()}),
+            '[' => Ok(Token{kind: TokenKind::LeftBrace, lexeme: input.to_string()}),
+            ']' => Ok(Token{kind: TokenKind::RightBrace, lexeme: input.to_string()}),
+            '{' => Ok(Token{kind: TokenKind::LeftCurly, lexeme: input.to_string()}),
+            '}' => Ok(Token{kind: TokenKind::RightCurly, lexeme: input.to_string()}),
+            '+' => Ok(Token{kind: TokenKind::Plus, lexeme: input.to_string()}),
+            '-' => Ok(Token{kind: TokenKind::Minus, lexeme: input.to_string()}),
+            '*' => Ok(Token{kind: TokenKind::Star, lexeme: input.to_string()}),
+            '/' => Ok(Token{kind: TokenKind::Slash, lexeme: input.to_string()}),
+            ',' => Ok(Token{kind: TokenKind::Comma, lexeme: input.to_string()}),
+            '.' => Ok(Token{kind: TokenKind::Dot, lexeme: input.to_string()}),
+            ';' => Ok(Token{kind: TokenKind::Semicolon, lexeme: input.to_string()}),
+             _  => Err("error: generate_single_token() called on invalid input".to_string())};
+    }
+
+    fn generate_double_token(input: &str) -> Result<Token, String> {
+        return match input {
+            "!=" => Ok(Token{kind: TokenKind::BangEqual, lexeme: input.to_string()}),
+            "==" => Ok(Token{kind: TokenKind::EqualEqual, lexeme: input.to_string()}),
+            ">=" => Ok(Token{kind: TokenKind::GreaterEqual, lexeme: input.to_string()}),
+            "<=" => Ok(Token{kind: TokenKind::LessEqual, lexeme: input.to_string()}),
+            _ => Err("error: generate_double_token() called on invalid input".to_string())
+        }
+    }
 }
 
 /// Struct representing the tokens in our language.
