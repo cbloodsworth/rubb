@@ -1,8 +1,10 @@
+use anyhow::{Result, Context};
+
 /// Takes program text as input and tokenizes it.
 /// 
 /// # Errors
 /// If the input cannot be lexed, returns a LexerError.
-pub fn lex(input: &str) -> Result<Vec<Token>, LexerError> {
+pub fn lex(input: &str) -> Result<Vec<Token>> {
     todo!("Lexer has not yet been written.")
 }
 
