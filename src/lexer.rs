@@ -73,7 +73,10 @@ impl Lexer {
                                 dot = true;
                                 substr.push(input.next().unwrap());
                             }
-                            '_' => { continue; }
+                            '_' => {
+                                input.next();
+                                continue; 
+                            }
                             c if c.is_numeric() => { substr.push(input.next().unwrap()); }
                             _ => { break; }
                         }

@@ -103,3 +103,8 @@ fn error_with_two_decimals() {
         Err(e) => assert!(e.message.contains("numbers cannot have two '.'")),
     }
 }
+
+#[test]
+fn visual_separator_in_numbers() {
+    validate_tokens!("100_000_000", "100000000");
+}
