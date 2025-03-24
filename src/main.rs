@@ -17,7 +17,7 @@ fn main() -> Result<()> {
 
     let tokens: Vec<Token> = Lexer::lex(&content)
         .map_err(anyhow::Error::from)
-        .with_context(|| format!("lexer error with the following program:\n```\n{content}```"))?;
+        .with_context(|| format!("lexer error in {filename} with the following program:\n```\n{content}```"))?;
 
     Ok(())
 }

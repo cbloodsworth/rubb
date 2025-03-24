@@ -48,8 +48,7 @@ impl Lexer {
                         substr.push(next);
                     }
                     if !valid {
-                        let message = "reached EOF without closing string".to_string();
-                        return Err(LexerError{message, line_number, column_number}); 
+                        return LexerError::err("reached EOF without closing string",line_number, column_number);
                     }
                 }
                 c if c.is_alphabetic() || c == '_' => {
@@ -69,8 +68,7 @@ impl Lexer {
                         match ch {
                             '.' => {
                                 if dot {
-                                    let message = "numbers cannot have two '.'".to_string();
-                                    return Err(LexerError { message, line_number, column_number});
+                                    return LexerError::err("numbers cannot have two '.'", line_number, column_number);
                                 }
                                 dot = true;
                                 substr.push(input.next().unwrap());
@@ -277,6 +275,19 @@ pub struct LexerError {
     message: String,
     line_number: usize,
     column_number: usize,
+}
+
+impl LexerError {
+    fn new<S: Into<String>>(msg: S, line_number: usize, column_number: usize) -> Self {
+        Self {
+            message: msg.into(),
+            line_number,
+            column_number,
+        }
+    }
+    fn err<Never, S: Into<String>>(msg: S, line_number: usize, column_number: usize) -> Result<Never, Self> {
+        Err(Self::new(msg, line_number, column_number))
+    }
 }
 
 impl std::fmt::Display for LexerError {
