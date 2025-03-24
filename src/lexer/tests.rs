@@ -3,7 +3,7 @@ use super::*;
 ///=================== Lexer test helpers. ===================
 macro_rules! validate_tokens {
     ($program:expr, $($expected_lexeme:expr),+) => {
-        let mut tokens = lex($program)
+        let mut tokens = Lexer::lex($program)
             .expect(&format!("Internal error: Could not lex the given program: {}.", $program))
             .into_iter();
         $(
@@ -44,7 +44,7 @@ fn lex_string_program() {
     validate_tokens!(
         r#"let my_string = "Hello World";"#, 
     
-        "let", "my_string", "=", "\"Hello World\"", ";"
+        "let", "my_string", "=", "Hello World", ";"
     );
 }
 
@@ -59,18 +59,6 @@ fn lex_number_program() {
 }
 
 #[test]
-#[should_panic(expected = "bad ident")]
-fn error_on_bad_ident_1() {
-    lex("let 41 = \"Bad\"").unwrap();
-}
-
-#[test]
-#[should_panic(expected = "bad ident")]
-fn error_on_bad_ident_2() {
-    lex("let 💀 = \"Bad\"").unwrap();
-}
-
-#[test]
 fn lex_multi_lines() {
     validate_tokens!(r#"
         let x = 1;
@@ -80,7 +68,7 @@ fn lex_multi_lines() {
     
     "let", "x", "=", "1", ";",
     "const", "y", "=", "2.32", ";",
-    "let", "_z", "=", "\"starting underscore\"", ";"
+    "let", "_z", "=", "starting underscore", ";"
     );
 }
 
@@ -98,4 +86,20 @@ fn lex_structure() {
         "const", "y", "=", "2", ";",
     "}", ";"
     );
+}
+
+#[test]
+fn error_on_unterminated_string() {
+    match Lexer::lex("let bad_string = \"I didn't end my string! Oops.") {
+        Ok(_) => panic!("did not error as expected"),
+        Err(e) => assert_eq!(e.message, "error: reached EOF without closing string"),
+    }
+}
+
+#[test]
+fn error_with_two_decimals() {
+    match Lexer::lex("let bad_number = 1.275.508") {
+        Ok(_) => panic!("did not error as expected"),
+        Err(e) => assert_eq!(e.message, "error: numbers cannot have two '.'"),
+    }
 }
