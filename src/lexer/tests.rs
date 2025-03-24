@@ -89,19 +89,15 @@ fn lex_structure() {
 }
 
 #[test]
+#[should_panic(expected = "reached EOF without closing string")]
 fn error_on_unterminated_string() {
-    match Lexer::lex("let bad_string = \"I didn't end my string! Oops.") {
-        Ok(_) => panic!("did not error as expected"),
-        Err(e) => assert!(e.message.contains("reached EOF without closing string")),
-    }
+    Lexer::lex("let bad_string = \"I didn't end my string! Oops.").unwrap();
 }
 
 #[test]
+#[should_panic(expected = "numbers cannot have two '.'")]
 fn error_with_two_decimals() {
-    match Lexer::lex("let bad_number = 1.275.508") {
-        Ok(_) => panic!("did not error as expected"),
-        Err(e) => assert!(e.message.contains("numbers cannot have two '.'")),
-    }
+    Lexer::lex("let bad_number = 1.275.508").unwrap();
 }
 
 #[test]
