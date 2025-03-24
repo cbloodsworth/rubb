@@ -75,6 +75,11 @@ impl Lexer {
                             }
                             '_' => {
                                 input.next();
+                                input.peek()
+                                    .filter(|next_char| next_char.is_numeric())
+                                    .ok_or_else(|| LexerError::new(
+                                        "invalid decimal separator", line_number, column_number))?;
+
                                 continue; 
                             }
                             c if c.is_numeric() => { substr.push(input.next().unwrap()); }

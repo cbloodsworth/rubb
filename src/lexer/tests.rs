@@ -108,3 +108,21 @@ fn error_with_two_decimals() {
 fn visual_separator_in_numbers() {
     validate_tokens!("100_000_000", "100000000");
 }
+
+#[test]
+#[should_panic(expected = "invalid decimal separator")]
+fn error_with_visual_separator_in_numbers() {
+    Lexer::lex("let x = 2_").unwrap();
+}
+
+#[test]
+#[should_panic(expected = "invalid decimal separator")]
+fn error_with_two_visual_separators_in_numbers() {
+    Lexer::lex("let x = 2__2").unwrap();
+}
+
+#[test]
+#[should_panic(expected = "invalid decimal separator")]
+fn error_with_visual_separators_in_numbers_with_chars() {
+    Lexer::lex("let x = 2_a_2").unwrap();
+}
