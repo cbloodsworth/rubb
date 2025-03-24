@@ -8,10 +8,13 @@ use anyhow::{Result, Context};
 pub struct Lexer;
 
 impl Lexer {
-    // Takes program text as input and tokenizes it.
-    pub fn lex(input: &str) -> Vec<Token> {
+    /// Takes program text as input and tokenizes it.
+    pub fn lex(input: &str) -> Result<Vec<Token>,LexerError> {
         let mut tokens: Vec<Token> = vec![];
         let mut input = input.chars().peekable();
+        // TODO: Implement line and column tracking for proper error messages
+        let line_number: usize = 0;
+        let column_number: usize = 0;
         while let Some(ch) = input.next() {
             match ch {
                 '(' | ')' | '[' | ']' | '{' | '}' | '+' | '-' | '*' | '/' | ',' | '.' | ';'  => {
@@ -20,78 +23,130 @@ impl Lexer {
                         Err(err_message) => println!("{err_message}")
                     }
                 }
-                // NOTE: yea this sux
-                '!' => {  
-                    if let Some(&next) = input.peek() {
-                        if next == '=' {
-                            tokens.push(Token{kind: TokenKind::BangEqual, lexeme: "!=".to_string()});
+                '!' | '=' | '>' | '<' => {
+                    if input.peek().is_some_and(|&next| next == '=') {
+                        match Self::generate_double_token(ch) {
+                            Ok(token) => tokens.push(token),
+                            Err(err_message) => println!("{err_message}")
                         }
                     } else {
-                        tokens.push(Token{kind: TokenKind::Bang, lexeme: "!".to_string()});
-                    }
-                }
-                '=' => {
-                    if let Some(&next) = input.peek() {
-                        if next == '=' {
-                            tokens.push(Token{kind: TokenKind::EqualEqual, lexeme: "==".to_string()});
+                        match Self::generate_single_token(ch) {
+                            Ok(token) => tokens.push(token),
+                            Err(err_message) => println!("{err_message}")
                         }
-                    } else {
-                        tokens.push(Token{kind: TokenKind::Equal, lexeme: "=".to_string()});
-                    }
+                    } 
                 }
-                '>' => {
-                    if let Some(&next) = input.peek() {
-                        if next == '=' {
-                            tokens.push(Token{kind: TokenKind::GreaterEqual, lexeme: ">=".to_string()});
+                '\"' => {
+                    let mut substr: Vec<char> = vec![];
+                    let mut valid = false;
+                    for next in input.by_ref() {
+                        if next == ch {
+                            tokens.push(Self::generate_literal_token(substr, Some(TokenKind::String)));
+                            valid = true;
+                            break;
                         }
-                    } else {
-                        tokens.push(Token{kind: TokenKind::Greater, lexeme: ">".to_string()});
+                        substr.push(next);
+                    }
+                    if !valid {
+                        let message = "error: reached EOF without closing string".to_string();
+                        return Err(LexerError{message, line_number, column_number}); 
                     }
                 }
-                '<' => {
-                    if let Some(&next) = input.peek() {
-                        if next == '=' {
-                            tokens.push(Token{kind: TokenKind::LessEqual, lexeme: "<=".to_string()});
+                c if c.is_alphabetic() || c == '_' => {
+                    let mut substr: Vec<char> = vec![];
+                    substr.push(ch);
+                    while input.peek().is_some_and(|&next| next.is_alphanumeric() || next == '_') {
+                        substr.push(input.next().unwrap());
+                    }
+                    tokens.push(Self::generate_literal_token(substr, None));
+                }
+                c if c.is_numeric() => {
+                    let mut substr: Vec<char> = vec![];
+                    substr.push(ch);
+                    // NOTE: There's probably a better way to do this than using a flag
+                    let mut dot = false;
+                    while let Some(ch) = input.peek() {
+                        match ch {
+                            '.' => {
+                                if dot {
+                                    let message = "error: numbers cannot have two '.'".to_string();
+                                    return Err(LexerError { message, line_number, column_number});
+                                }
+                                dot = true;
+                                substr.push(input.next().unwrap());
+                            }
+                            '_' => { continue; }
+                            c if c.is_numeric() => { substr.push(input.next().unwrap()); }
+                            _ => { break; }
                         }
-                    } else {
-                        tokens.push(Token{kind: TokenKind::Less, lexeme: "<".to_string()});
                     }
+                    tokens.push(Self::generate_literal_token(substr, Some(TokenKind::Number)));
                 }
+                c if c.is_whitespace() => { continue; }
                 _ => {
                     println!("hi :)");
                 }
             }
         }                               
-        return tokens;
+        Ok(tokens)
     }
     
     fn generate_single_token(input: char) -> Result<Token, String> {
-        return match input {
-            '(' => Ok(Token{kind: TokenKind::LeftParen, lexeme: input.to_string()}),
-            ')' => Ok(Token{kind: TokenKind::RightParen, lexeme: input.to_string()}),
-            '[' => Ok(Token{kind: TokenKind::LeftBrace, lexeme: input.to_string()}),
-            ']' => Ok(Token{kind: TokenKind::RightBrace, lexeme: input.to_string()}),
-            '{' => Ok(Token{kind: TokenKind::LeftCurly, lexeme: input.to_string()}),
-            '}' => Ok(Token{kind: TokenKind::RightCurly, lexeme: input.to_string()}),
-            '+' => Ok(Token{kind: TokenKind::Plus, lexeme: input.to_string()}),
-            '-' => Ok(Token{kind: TokenKind::Minus, lexeme: input.to_string()}),
-            '*' => Ok(Token{kind: TokenKind::Star, lexeme: input.to_string()}),
-            '/' => Ok(Token{kind: TokenKind::Slash, lexeme: input.to_string()}),
-            ',' => Ok(Token{kind: TokenKind::Comma, lexeme: input.to_string()}),
-            '.' => Ok(Token{kind: TokenKind::Dot, lexeme: input.to_string()}),
-            ';' => Ok(Token{kind: TokenKind::Semicolon, lexeme: input.to_string()}),
-             _  => Err("error: generate_single_token() called on invalid input".to_string())};
+        let token = match input {
+            '(' => Token{kind: TokenKind::LeftParen, lexeme: input.to_string()},
+            ')' => Token{kind: TokenKind::RightParen, lexeme: input.to_string()},
+            '[' => Token{kind: TokenKind::LeftBrace, lexeme: input.to_string()},
+            ']' => Token{kind: TokenKind::RightBrace, lexeme: input.to_string()},
+            '{' => Token{kind: TokenKind::LeftCurly, lexeme: input.to_string()},
+            '}' => Token{kind: TokenKind::RightCurly, lexeme: input.to_string()},
+            '+' => Token{kind: TokenKind::Plus, lexeme: input.to_string()},
+            '-' => Token{kind: TokenKind::Minus, lexeme: input.to_string()},
+            '*' => Token{kind: TokenKind::Star, lexeme: input.to_string()},
+            '/' => Token{kind: TokenKind::Slash, lexeme: input.to_string()},
+            ',' => Token{kind: TokenKind::Comma, lexeme: input.to_string()},
+            '.' => Token{kind: TokenKind::Dot, lexeme: input.to_string()},
+            ';' => Token{kind: TokenKind::Semicolon, lexeme: input.to_string()},
+            '!' => Token{kind: TokenKind::Bang, lexeme: input.to_string()},
+            '=' => Token{kind: TokenKind::Equal, lexeme: input.to_string()},
+            '>' => Token{kind: TokenKind::Greater, lexeme: input.to_string()},
+            '<' => Token{kind: TokenKind::Less, lexeme: input.to_string()},
+             _  => return Err("error: generate_single_token() called on invalid input".to_string())
+        };
+        Ok(token)
     }
 
-    fn generate_double_token(input: &str) -> Result<Token, String> {
-        return match input {
-            "!=" => Ok(Token{kind: TokenKind::BangEqual, lexeme: input.to_string()}),
-            "==" => Ok(Token{kind: TokenKind::EqualEqual, lexeme: input.to_string()}),
-            ">=" => Ok(Token{kind: TokenKind::GreaterEqual, lexeme: input.to_string()}),
-            "<=" => Ok(Token{kind: TokenKind::LessEqual, lexeme: input.to_string()}),
-            _ => Err("error: generate_double_token() called on invalid input".to_string())
-        }
+    // This function is only called for the two character tokens: '!=', '==', '<=', '>='
+    fn generate_double_token(input: char) -> Result<Token, String> {
+        let token = match input {
+            '!' => Token{kind: TokenKind::BangEqual, lexeme: "!=".to_string()},
+            '=' => Token{kind: TokenKind::EqualEqual, lexeme: "==".to_string()},
+            '<' => Token{kind: TokenKind::LessEqual, lexeme: "<=".to_string()},
+            '>' => Token{kind: TokenKind::GreaterEqual, lexeme: ">=".to_string()},
+             _  => return Err("error: generate_double_token() called on invalid input".to_string()),
+        };
+        Ok(token)
     }
+
+    fn generate_literal_token(input: Vec<char>, kind: Option<TokenKind>) -> Token {
+        let lexeme: String = input.iter().collect();
+        if let Some(kind) = kind { return Token{kind, lexeme} }
+        let kind = match lexeme.to_lowercase().as_str() {
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            "for" => TokenKind::For,
+            "while" => TokenKind::While,
+            "true" => TokenKind::True,
+            "false" => TokenKind::False,
+            "func" => TokenKind::Func,
+            "return" => TokenKind::Return,
+            "let" => TokenKind::Let,
+            "const" => TokenKind::Const,
+            "struct" => TokenKind::Struct,
+            _ => TokenKind::Identifier,
+        };
+        Token{kind, lexeme}
+    }
+
 }
 
 /// Struct representing the tokens in our language.
@@ -131,6 +186,50 @@ enum TokenKind {
 impl std::fmt::Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
+            Self::LeftParen => "(",
+            Self::RightParen => ")",
+            Self::LeftBrace => "[",
+            Self::RightBrace => "]",
+            Self::LeftCurly => "{",
+            Self::RightCurly => "}",
+            Self::Plus => "+",
+            Self::Minus => "-",
+            Self::Star => "*",
+            Self::Slash => "/",
+            Self::Comma => ",",
+            Self::Dot => ".",
+            Self::Semicolon => ";",
+            Self::Bang => "!",
+            Self::BangEqual => "!=",
+            Self::Equal => "=",
+            Self::EqualEqual => "==",
+            Self::Greater => ">",
+            Self::GreaterEqual => ">=",
+            Self::Less => "<",
+            Self::LessEqual => "<=",
+            Self::Identifier => "IDENTIFIER",
+            Self::String => "STRING",
+            Self::Number => "NUMBER",
+            Self::If => "if",
+            Self::Else => "else",
+            Self::For => "for",
+            Self::While => "while",
+            Self::True => "true",
+            Self::False => "false",
+            Self::Func => "fn",
+            Self::Return => "return",
+            Self::Let => "let",
+            Self::Const => "const",
+            Self::Struct => "struct",
+        };
+
+        write!(f, "{s}")
+    }
+}
+
+impl std::fmt::Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s_kind = match self.kind {
             TokenKind::LeftParen => "(",
             TokenKind::RightParen => ")",
             TokenKind::LeftBrace => "[",
@@ -168,9 +267,10 @@ impl std::fmt::Display for TokenKind {
             TokenKind::Struct => "struct",
         };
 
-        write!(f, "{s}")
+        write!(f, "kind: {s_kind}, lexeme: {}", self.lexeme)
     }
 }
+
 
 #[derive(Debug)]
 pub struct LexerError {

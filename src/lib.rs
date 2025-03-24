@@ -26,5 +26,5 @@ pub fn run(program: String) {
 // in our library can access these. (main.rs cannot!)
 // TODO: revert to pub(crate) gaming
 pub mod lexer;
-pub(crate) mod parser;
+pub mod parser;
 pub(crate) mod interpreter;
