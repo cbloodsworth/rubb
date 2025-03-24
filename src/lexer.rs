@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::{Result, Context, anyhow};
 
 // Takes program text as input and tokenizes it.
 // pub fn lex(input: &str) -> Vec<Token> {
@@ -48,7 +48,7 @@ impl Lexer {
                         substr.push(next);
                     }
                     if !valid {
-                        let message = "error: reached EOF without closing string".to_string();
+                        let message = "reached EOF without closing string".to_string();
                         return Err(LexerError{message, line_number, column_number}); 
                     }
                 }
@@ -69,7 +69,7 @@ impl Lexer {
                         match ch {
                             '.' => {
                                 if dot {
-                                    let message = "error: numbers cannot have two '.'".to_string();
+                                    let message = "numbers cannot have two '.'".to_string();
                                     return Err(LexerError { message, line_number, column_number});
                                 }
                                 dot = true;
@@ -110,7 +110,7 @@ impl Lexer {
             '=' => Token{kind: TokenKind::Equal, lexeme: input.to_string()},
             '>' => Token{kind: TokenKind::Greater, lexeme: input.to_string()},
             '<' => Token{kind: TokenKind::Less, lexeme: input.to_string()},
-             _  => return Err("error: generate_single_token() called on invalid input".to_string())
+             _  => return Err("generate_single_token() called on invalid input".to_string())
         };
         Ok(token)
     }
@@ -122,7 +122,7 @@ impl Lexer {
             '=' => Token{kind: TokenKind::EqualEqual, lexeme: "==".to_string()},
             '<' => Token{kind: TokenKind::LessEqual, lexeme: "<=".to_string()},
             '>' => Token{kind: TokenKind::GreaterEqual, lexeme: ">=".to_string()},
-             _  => return Err("error: generate_double_token() called on invalid input".to_string()),
+             _  => return Err("generate_double_token() called on invalid input".to_string()),
         };
         Ok(token)
     }
@@ -282,6 +282,12 @@ pub struct LexerError {
 impl std::fmt::Display for LexerError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}:{}:{}", self.message, self.line_number, self.column_number)
+    }
+}
+
+impl From<LexerError> for anyhow::Error {
+    fn from(err: LexerError) -> Self {
+        anyhow!("LEXER ERROR: {err}")
     }
 }
 
